@@ -1,0 +1,786 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Outils numériques pour la classe</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Outfit:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f6f5ff;--card:#fff;--ink:#1f2340;--muted:#6f7391;--line:#e6e4f7;--brand:#6d5efc;--brand2:#ff6b9d;--r:18px;--accent:#6d5efc;--shadow:0 6px 24px rgba(80,70,180,.10)}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;color:var(--ink);font-family:"DM Sans",system-ui,-apple-system,"Segoe UI",sans-serif;line-height:1.5;
+  background:radial-gradient(900px 420px at 90% -5%,#e9e4ff 0,transparent 60%),radial-gradient(800px 380px at -10% 8%,#ffe6f0 0,transparent 55%),var(--bg)}
+h1,h2,h3,h4,.brand,.fab,.m1>summary,.m2>summary{font-family:"Outfit","DM Sans",system-ui,sans-serif}
+button{font:inherit;cursor:pointer;color:inherit}
+:focus-visible{outline:3px solid #9a8cff;outline-offset:2px}
+
+header.top{position:sticky;top:0;z-index:20;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;padding:14px 20px;color:#fff;
+  background:linear-gradient(110deg,#6d5efc 0%,#a45cff 55%,#ff6b9d 100%);box-shadow:0 6px 22px rgba(109,94,252,.35)}
+.brand{font-weight:700;font-size:1.3rem;letter-spacing:-.01em;display:flex;gap:10px;align-items:center}
+.actions{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.chip{background:#fff;color:#5a45e8;border-radius:999px;padding:4px 12px;font-weight:700;font-size:.8rem}
+main{max-width:1000px;margin:0 auto;padding:22px 18px 110px}
+
+.btn{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 15px;font-weight:600;transition:background .15s,border-color .15s,transform .1s}
+.btn:hover{border-color:#cfc9f5;background:#f7f5ff}
+.btn:active{transform:scale(.97)}
+.btn.primary{background:linear-gradient(110deg,#6d5efc,#a45cff);border-color:transparent;color:#fff}
+.btn.primary:hover{filter:brightness(1.07)}
+.btn.small{padding:3px 11px;font-size:.8rem}
+.btn.ghost{border-style:dashed;color:var(--muted);background:transparent}
+.top .btn{background:rgba(255,255,255,.18);border-color:rgba(255,255,255,.5);color:#fff}
+.top .btn:hover{background:rgba(255,255,255,.32)}
+
+.banner{background:#fff4e5;border:1px solid #f3cf9b;color:#7a4a0a;border-radius:12px;padding:12px 16px;margin-bottom:16px;font-weight:600}
+.empty{color:var(--muted);font-style:italic;margin:6px 0}
+
+/* ===== Index : liste de titres dépliables ===== */
+.menu{background:var(--card);border-radius:var(--r);box-shadow:var(--shadow);padding:4px 20px}
+.menu summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:9px;flex-wrap:wrap;padding:11px 2px;user-select:none}
+.menu summary::-webkit-details-marker{display:none}
+.chev{display:inline-block;color:var(--muted);transition:transform .15s;flex:none;font-size:.9em}
+details[open]>summary>.chev{transform:rotate(90deg)}
+.dotc{width:13px;height:13px;border-radius:50%;background:var(--accent);flex:none;box-shadow:0 0 0 4px color-mix(in srgb,var(--accent) 18%,transparent)}
+.m1{border-bottom:1px solid var(--line)}
+.m1:last-child{border-bottom:none}
+.m1>summary{font-size:1.3rem;font-weight:700;padding:15px 2px}
+.m1>summary:hover .sum-title,.m2>summary:hover .sum-title{color:var(--accent)}
+.sub{margin-left:24px}
+.m2>summary{font-size:1.1rem;font-weight:600}
+.leaf-row{display:flex;align-items:center;gap:8px}
+a.leaf{flex:1;min-width:0;display:block;padding:7px 2px 7px 22px;color:var(--ink);text-decoration:none;font-size:1.02rem}
+a.leaf:hover .lt{text-decoration:underline;text-decoration-color:var(--accent);text-underline-offset:3px}
+.pfx{display:inline-block;background:color-mix(in srgb,var(--accent) 15%,#fff);color:var(--accent);font-weight:700;font-size:.78em;padding:1px 9px;border-radius:999px;margin-right:8px;vertical-align:.05em}
+
+/* ===== Page d'une compétence ===== */
+.crumb{color:var(--accent);font-weight:700;margin-bottom:4px}
+.crumb-b{border:none;background:none;padding:2px 0;font-weight:700;color:var(--accent);text-decoration:underline;text-decoration-color:transparent;text-underline-offset:3px}
+.crumb-b:hover{text-decoration-color:var(--accent)}
+.titlebar{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.ptitle{margin:0;font-size:1.7rem;line-height:1.25}
+.idx{flex:none}
+.brand .idx-top{margin-left:6px;font-size:.85rem;font-weight:700;flex:none}
+.priv{display:inline-block;background:#fff0f3;color:#d92d4f;border:1px solid #f6b4c1;font-weight:700;font-size:.75rem;padding:2px 10px;border-radius:999px;margin-left:8px;white-space:nowrap}
+.lien.locked{opacity:.7;cursor:not-allowed}
+.lien.locked:hover{transform:none;box-shadow:none}
+.badge.priv-b{background:#d92d4f;color:#fff}
+.padm{margin-bottom:16px;display:flex;gap:8px;flex-wrap:wrap}
+
+/* Les blocs s'adaptent au nombre de liens : 1 lien = 1 colonne, 2 liens = 2 colonnes, 3 et plus = pleine largeur */
+.blocs{display:grid;grid-template-columns:1fr;gap:16px;grid-auto-flow:dense}
+.blocs>.empty{grid-column:1/-1}
+.bloc{--cols:1;background:#fff;border:1px solid var(--line);border-top:4px solid var(--accent);border-radius:var(--r);padding:14px;align-self:start;box-shadow:var(--shadow)}
+.bloc-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.bloc-head h4{margin:0;flex:1;font-size:1rem;font-weight:600}
+.grow{flex:1}
+.liens{display:grid;grid-template-columns:repeat(var(--cols),1fr);gap:12px;margin-bottom:2px}
+.bloc>.btn{margin-top:10px}
+@media(min-width:640px){
+  .blocs{grid-template-columns:repeat(2,1fr)}
+  .bloc.n2,.bloc.n3{grid-column:span 2;--cols:2}
+}
+@media(min-width:1000px){
+  .blocs{grid-template-columns:repeat(3,1fr)}
+  .bloc.n3{grid-column:span 3;--cols:3}
+}
+
+.lien{display:flex;flex-direction:column;background:#fff;border:1px solid var(--line);border-radius:14px;overflow:hidden;transition:box-shadow .15s,transform .15s}
+.lien:hover{box-shadow:0 10px 24px rgba(80,70,180,.16);transform:translateY(-3px)}
+.lien-a{color:inherit;text-decoration:none;display:block;flex:1}
+.lien-title{display:block;padding:10px 12px 12px;font-weight:600;font-size:.95rem}
+.lien-a:hover .lien-title{color:var(--accent)}
+.thumb{position:relative;aspect-ratio:16/10;display:grid;place-items:center;overflow:hidden}
+.thumb.appli{background:linear-gradient(135deg,#dfe9ff,#bcb6ff)}
+.thumb.presentation{background:linear-gradient(135deg,#ffe9d2,#ffb3c8)}
+.thumb.autre{background:linear-gradient(135deg,#e8f7f2,#bfe8dc)}
+.thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top}
+.ticon{font-size:2.3rem}
+.badge{position:absolute;top:8px;left:8px;z-index:2;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+.badge.appli{background:#4f46e5;color:#fff}
+.badge.presentation{background:#f2557f;color:#fff}
+.badge.autre{background:#0f9e82;color:#fff}
+
+.ctl{display:inline-flex;gap:4px;align-items:center}
+.ic{border:1px solid var(--line);background:#fff;border-radius:9px;width:28px;height:28px;display:grid;place-items:center;color:var(--muted);padding:0;line-height:1}
+.ic:hover{color:var(--ink);border-color:#cfc9f5;background:#f7f5ff}
+.ic.danger:hover{color:#d92d4f;border-color:#f6b4c1}
+.lien>.ctl{padding:6px 8px;border-top:1px solid var(--line);justify-content:flex-end}
+
+/* Bouton flottant : revenir à l'index replié (présent sur toutes les pages) */
+.fab{position:fixed;right:18px;bottom:22px;z-index:30;border:none;background:linear-gradient(110deg,#6d5efc,#ff6b9d);color:#fff;border-radius:999px;padding:13px 22px;font-weight:700;font-size:1rem;box-shadow:0 10px 26px rgba(109,94,252,.45);display:flex;gap:8px;align-items:center}
+.fab:hover{filter:brightness(1.08)}
+
+dialog{border:none;border-radius:22px;padding:0;width:min(520px,92vw);max-height:90vh;box-shadow:0 24px 70px rgba(40,30,120,.35);color:var(--ink)}
+dialog::backdrop{background:rgba(31,35,64,.5)}
+#setDlg{width:min(660px,94vw)}
+.dlg{padding:22px}
+.dlg h2{margin:0 0 14px;font-size:1.3rem;font-family:"Outfit","DM Sans",sans-serif}
+.field{display:block;margin-bottom:12px}
+.field>span{display:block;font-weight:700;margin-bottom:4px;font-size:.9rem}
+.field input,.field select{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:12px;font:inherit;background:#fff}
+.field input[type=color]{padding:2px;height:42px}
+.field small{color:var(--muted);display:block;margin-top:3px}
+.upl{margin-top:4px;font-size:.88rem;font-weight:600}
+.err{color:#d92d4f;min-height:1.2em;font-weight:600;margin:4px 0}
+.dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
+
+.set-h{margin:22px 0 4px;font-family:"Outfit","DM Sans",sans-serif;font-size:1.05rem}
+.exp{display:flex;gap:8px;flex-wrap:wrap}
+.set-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
+.set-head h2{margin:0}
+.hint{color:var(--muted);margin:0 0 14px}
+.set-mat{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:12px}
+.set-row{display:flex;align-items:center;gap:8px}
+.set-row strong{flex:1}
+.dot{width:14px;height:14px;border-radius:50%;flex:none}
+.set-sous{list-style:none;margin:8px 0;padding:0 0 0 22px}
+.set-sous li{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px dashed var(--line)}
+.set-sous li span{flex:1}
+
+#toast{position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#1f2340;color:#fff;padding:10px 16px;border-radius:12px;opacity:0;pointer-events:none;transition:opacity .2s;z-index:100;max-width:90vw}
+#toast.show{opacity:1}
+</style>
+</head>
+<body>
+<header class="top">
+  <div class="brand"><span>✨</span><span>Outils numériques pour la classe</span><button class="btn small idx-top" data-act="collapse" aria-label="Revenir à l'index">☰ Index</button></div>
+  <div class="actions" id="actions"></div>
+</header>
+
+<main>
+  <div id="banner"></div>
+  <div id="content"><p class="empty">Chargement…</p></div>
+</main>
+
+<button class="fab" id="fab" data-act="collapse" title="Revenir à l'index" aria-label="Revenir à l'index">☰ Index</button>
+
+<dialog id="formDlg"></dialog>
+<dialog id="setDlg"></dialog>
+<div id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+/* ============ CONFIGURATION SUPABASE (à remplacer) ============ */
+const SUPABASE_URL = "https://VOTRE-PROJET.supabase.co";
+const SUPABASE_KEY = "VOTRE_CLE_ANON_PUBLIQUE";
+/* ================================================================ */
+
+const configured = !SUPABASE_URL.includes("VOTRE-PROJET") && !SUPABASE_KEY.includes("VOTRE_CLE");
+const sb = configured ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null;
+
+const PALETTE = ["#6d5efc","#ff6b6b","#00b894","#fdab29","#0abde3","#e056a0","#ff7f50"];
+const DEF_TXT = "#1f2340";   // couleur de texte par défaut des compétences
+const LABEL = { appli: "Appli", presentation: "Présentation", autre: "Autre lien" };
+const ICON  = { appli: "🎮", presentation: "📊", autre: "🔗" };
+const EDIT  = { matieres:"edit-mat", sous_matieres:"edit-sous", competences:"edit-comp", blocs:"edit-bloc", liens:"edit-lien" };
+const KEY   = { matieres:"matieres", sous_matieres:"sous", competences:"comps", blocs:"blocs", liens:"liens" };
+
+const state = { matieres:[], sous:[], comps:[], blocs:[], liens:[], admin:false, loading:true };
+const open = new Set();   // menus déroulés de l'index : "m:<id>", "s:<id>"
+
+/* ---------- utilitaires ---------- */
+const $ = (s, r = document) => r.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({ "&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;" }[c]));
+const byOrdre = (a, b) => (a.ordre ?? 0) - (b.ordre ?? 0) || String(a.created_at).localeCompare(String(b.created_at));
+const nextOrdre = list => list.length ? Math.max(...list.map(x => x.ordre ?? 0)) + 1 : 0;
+const fmtNum = n => String(Number(n));
+const safeColor = c => /^#[0-9a-f]{6}$/i.test(c || "") ? c : "#2f7d6d";
+function hostOf(u){ try { return new URL(u).hostname.replace(/^www\./, ""); } catch { return ""; } }
+function normUrl(u){
+  u = String(u || "").trim();
+  if (!/^https?:\/\//i.test(u)) u = "https://" + u;
+  try {
+    const x = new URL(u);
+    if (!/^https?:$/.test(x.protocol) || !x.hostname.includes(".")) throw 0;
+    return x.href;
+  } catch { throw new Error("Adresse de lien invalide."); }
+}
+function guessType(url){
+  const u = String(url || "").toLowerCase();
+  if (/\.(pptx?|pps|ppsx|odp|key)(\?|#|$)/.test(u) ||
+      /docs\.google\.com\/presentation|canva\.com|genial\.ly|slideshare|prezi\.com|office\.com|powerpoint|slides\.com|pagedeslides/.test(u)) return "presentation";
+  return "appli";
+}
+async function q(p){ const { data, error } = await p; if (error) throw error; return data; }
+function toast(msg){
+  const t = $("#toast"); t.textContent = msg; t.classList.add("show");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove("show"), 3500);
+}
+function notify(msg){
+  if ($("#setDlg").open && $("#setErr")) $("#setErr").textContent = msg; else toast(msg);
+}
+// page courante : "#/c/<id>" = page d'une compétence, sinon l'index
+const currentCid = () => (location.hash.match(/^#\/c\/(.+)$/) || [])[1] || null;
+
+/* ---------- données ---------- */
+async function loadAll(){
+  const tables = ["matieres","sous_matieres","competences","blocs","liens"];
+  // les visiteurs lisent les liens via une vue qui masque l'adresse des liens privés
+  const res = await Promise.all(tables.map(t => sb.from(t === "liens" && !state.admin ? "liens_pub" : t).select("*")));
+  res.forEach(r => { if (r.error) throw r.error; });
+  state.matieres = res[0].data.sort(byOrdre);
+  state.sous     = res[1].data.sort(byOrdre);
+  state.comps    = res[2].data.sort(byOrdre);
+  state.blocs    = res[3].data.sort(byOrdre);
+  state.liens    = res[4].data.sort(byOrdre);
+}
+async function refresh(){
+  await loadAll(); render();
+  if ($("#setDlg").open) renderSettings();
+}
+function siblings(t, id){
+  const it = state[KEY[t]].find(x => x.id === id);
+  if (!it) return [];
+  switch (t){
+    case "matieres":      return state.matieres;
+    case "sous_matieres": return state.sous.filter(x => x.matiere_id === it.matiere_id);
+    case "competences":   return state.comps.filter(x => x.sous_matiere_id === it.sous_matiere_id && x.matiere_id === it.matiere_id);
+    case "blocs":         return state.blocs.filter(x => x.competence_id === it.competence_id);
+    case "liens":         return state.liens.filter(x => x.bloc_id === it.bloc_id);
+  }
+  return [];
+}
+
+/* ---------- rendu ---------- */
+function ctlHTML(t, id, move = true){
+  return `<span class="ctl">${move ? `<button class="ic" title="Monter" aria-label="Monter" data-act="move" data-t="${t}" data-id="${id}" data-dir="-1">↑</button><button class="ic" title="Descendre" aria-label="Descendre" data-act="move" data-t="${t}" data-id="${id}" data-dir="1">↓</button>` : ""}${t === "matieres" ? `<button class="ic" title="Masquer / afficher aux visiteurs" aria-label="Masquer ou afficher cette matière aux visiteurs" data-act="toggle-masque" data-id="${id}">${state.matieres.find(x => x.id === id)?.masque ? "🙈" : "👁️"}</button>` : ""}${t === "liens" ? `<button class="ic" title="Copier dans un autre bloc" aria-label="Copier ce lien dans un autre bloc" data-act="copy-lien" data-id="${id}">⧉</button>` : ""}${t === "liens" ? `<button class="ic" title="Rendre privé / public" aria-label="Rendre ce lien privé ou public" data-act="toggle-prive" data-id="${id}">${state.liens.find(x => x.id === id)?.prive ? "🔒" : "🔓"}</button>` : ""}${t === "blocs" ? `<button class="ic" title="Copier dans une autre compétence" aria-label="Copier dans une autre compétence" data-act="copy-bloc" data-id="${id}">⧉</button>` : ""}<button class="ic" title="Modifier" aria-label="Modifier" data-act="${EDIT[t]}" data-id="${id}">✎</button><button class="ic danger" title="Supprimer" aria-label="Supprimer" data-act="del" data-t="${t}" data-id="${id}">✕</button></span>`;
+}
+
+function renderHeader(){
+  const a = $("#actions");
+  if (state.admin){
+    a.innerHTML = `<span class="chip">Mode administrateur</span>
+      <button class="btn" data-act="settings">⚙️ Paramètres</button>
+      <button class="btn" data-act="logout">Se déconnecter</button>`;
+  } else {
+    a.innerHTML = `<button class="btn" data-act="login">🔐 Administrateur</button>`;
+  }
+}
+
+function thumbHTML(l){
+  const type = LABEL[l.type] ? l.type : "autre";
+  const isFile = /\.(pptx?|ppsx?)(\?|#|$)/i.test(l.url);
+  const src = l.miniature_url || (isFile ? "" : `https://image.thum.io/get/width/480/crop/300/noanimate/${l.url}`);
+  return `<div class="thumb ${type}"><span class="ticon">${ICON[type]}</span>${src ? `<img loading="lazy" alt="" src="${esc(src)}" onerror="this.remove()">` : ""}<span class="badge ${type}">${LABEL[type]}</span></div>`;
+}
+
+function lienHTML(l){
+  if (l.prive && !state.admin)   // visiteur : carte visible mais non cliquable (l'adresse n'est même pas transmise)
+    return `<div class="lien locked" aria-disabled="true">
+      <div class="thumb ${LABEL[l.type] ? l.type : "autre"}"><span class="ticon">🔒</span>${l.miniature_url ? `<img loading="lazy" alt="" src="${esc(l.miniature_url)}" onerror="this.remove()">` : ""}<span class="badge priv-b">🔒 Privé</span></div>
+      <span class="lien-title">${esc(l.titre)}</span>
+    </div>`;
+  return `<div class="lien">
+    <a class="lien-a" href="${esc(l.url)}" target="_blank" rel="noopener noreferrer" title="${esc(hostOf(l.url))}">
+      ${thumbHTML(l)}<span class="lien-title">${esc(l.titre)}${l.prive ? ` <span class="priv">🔒 Privé</span>` : ""}</span>
+    </a>
+    ${state.admin ? ctlHTML("liens", l.id) : ""}
+  </div>`;
+}
+
+function blocHTML(b){
+  const liens = state.liens.filter(l => l.bloc_id === b.id);
+  const n = Math.min(liens.length, 3) || 1;
+  const head = (b.titre || state.admin)
+    ? `<div class="bloc-head">${b.titre ? `<h4>${esc(b.titre)}</h4>` : `<span class="grow"></span>`}${state.admin ? ctlHTML("blocs", b.id) : ""}</div>` : "";
+  return `<div class="bloc n${n}">${head}
+    <div class="liens">${liens.map(lienHTML).join("")}</div>
+    ${state.admin ? `<button class="btn small ghost" data-act="add-lien" data-id="${b.id}">+ Lien</button>` : ""}
+  </div>`;
+}
+
+/* ----- Page 1 : l'index (liste de titres dépliables) ----- */
+const op = k => open.has(k) ? "open" : "";
+
+function leafHTML(c){
+  const col = c.couleur_texte ? ` style="color:${safeColor(c.couleur_texte)}"` : "";
+  const pfx = c.prefixe ? `<span class="pfx">${esc(c.prefixe)}</span>` : "";
+  return `<div class="leaf-row"><a class="leaf" href="#/c/${c.id}">${pfx}<span class="lt"${col}>${esc(c.titre)}</span></a>${state.admin ? ctlHTML("competences", c.id) : ""}</div>`;
+}
+
+function sousHTML(s){
+  const comps = state.comps.filter(c => c.sous_matiere_id === s.id);
+  const k = "s:" + s.id;
+  return `<details class="m2" data-k="${k}" ${op(k)}>
+    <summary><span class="chev">▸</span><span class="sum-title">${esc(s.nom)}</span>
+      ${state.admin ? `<button class="btn small" data-act="add-comp" data-id="${s.id}">+ Compétence</button>` : ""}
+    </summary>
+    <div class="sub">${comps.map(leafHTML).join("") || `<p class="empty">Aucune compétence pour l'instant.</p>`}</div>
+  </details>`;
+}
+
+function matHTML(m){
+  const sous = state.sous.filter(s => s.matiere_id === m.id);
+  const k = "m:" + m.id;
+  const direct = state.comps.filter(c => c.matiere_id === m.id);   // compétences rattachées directement à la matière (sans sous-matière)
+  return `<details class="m1" data-k="${k}" ${op(k)} style="--accent:${safeColor(m.couleur)}">
+    <summary><span class="dotc"></span><span class="chev">▸</span><span class="sum-title">${esc(m.nom)}${m.masque ? ` <span class="priv">🙈 Masquée</span>` : ""}</span>
+      ${state.admin ? `<button class="btn small" data-act="add-comp-m" data-id="${m.id}">+ Compétence</button><button class="btn small" data-act="add-sous" data-id="${m.id}">+ Sous-matière</button>` : ""}
+    </summary>
+    <div class="sub">${direct.map(leafHTML).join("")}${sous.map(sousHTML).join("") || (direct.length ? "" : `<p class="empty">Rien pour l'instant.</p>`)}</div>
+  </details>`;
+}
+
+function indexHTML(){
+  if (!state.matieres.length){
+    return state.admin
+      ? `<p class="empty">Aucune matière pour l'instant. Ouvre « ⚙️ Paramètres » pour créer tes matières et sous-matières.</p>`
+      : `<p class="empty">Aucune ressource pour l'instant.</p>`;
+  }
+  return `<div class="menu">${state.matieres.map(matHTML).join("")}</div>`;
+}
+
+/* ----- Page 2 : une compétence et ses blocs de liens ----- */
+function pageHTML(c){
+  const s = state.sous.find(x => x.id === c.sous_matiere_id);
+  const m = state.matieres.find(x => x.id === (s ? s.matiere_id : c.matiere_id));
+  let blocs = state.blocs.filter(b => b.competence_id === c.id);
+  if (!state.admin) blocs = blocs.filter(b => state.liens.some(l => l.bloc_id === b.id));
+  const col = c.couleur_texte ? ` style="color:${safeColor(c.couleur_texte)}"` : "";
+  const pfx = c.prefixe ? `<span class="pfx">${esc(c.prefixe)}</span>` : "";
+  return `<div class="page" style="--accent:${safeColor(m?.couleur)}">
+    <div class="crumb"><button class="crumb-b" data-act="goto" data-t="m" data-id="${m?.id ?? ""}">${esc(m?.nom || "")}</button>${s ? ` › <button class="crumb-b" data-act="goto" data-t="s" data-id="${s.id}">${esc(s.nom)}</button>` : ""}</div>
+    <div class="titlebar"><h1 class="ptitle">${pfx}<span${col}>${esc(c.titre)}</span></h1><button class="btn small idx" data-act="collapse">☰ Index</button></div>
+    ${state.admin ? `<div class="padm"><button class="btn small" data-act="add-bloc" data-id="${c.id}">+ Bloc</button>${ctlHTML("competences", c.id, false)}</div>` : ""}
+    <div class="blocs">${blocs.map(blocHTML).join("") || `<p class="empty">Aucun lien pour cette compétence.</p>`}</div></div>`;
+}
+
+function render(){
+  renderHeader();
+  if (state.loading) return;
+  const cid = currentCid();
+  const c = cid && state.comps.find(x => x.id === cid);
+  if (cid && !c) history.replaceState(null, "", location.pathname + location.search);  // compétence supprimée : retour à l'index
+  $("#content").innerHTML = c ? pageHTML(c) : indexHTML();
+}
+
+function renderSettings(){
+  const d = $("#setDlg");
+  d.innerHTML = `<div class="dlg">
+    <div class="set-head"><h2>⚙️ Paramètres</h2><button class="btn small" data-act="close-set">Fermer</button></div>
+    <p class="hint">Crée ici tes matières et, si besoin, leurs sous-matières (facultatives). Les compétences se créent ensuite dans l'index (bouton « + Compétence », directement sous une matière ou sous une sous-matière), et les liens dans la page de chaque compétence.</p>
+    <div class="err" id="setErr"></div>
+    ${state.matieres.map(m => {
+      const sous = state.sous.filter(s => s.matiere_id === m.id);
+      return `<div class="set-mat">
+        <div class="set-row"><span class="dot" style="background:${safeColor(m.couleur)}"></span><strong>${esc(m.nom)}${m.masque ? ` <span class="priv">🙈 Masquée aux visiteurs</span>` : ""}</strong>${ctlHTML("matieres", m.id)}</div>
+        <ul class="set-sous">${sous.map(s => `<li><span>${esc(s.nom)}</span>${ctlHTML("sous_matieres", s.id)}</li>`).join("") || `<li><span class="empty">Aucune sous-matière</span></li>`}</ul>
+        <button class="btn small" data-act="add-sous" data-id="${m.id}">+ Sous-matière</button>
+      </div>`;
+    }).join("")}
+    <button class="btn primary" data-act="add-mat">+ Nouvelle matière</button>
+    <h3 class="set-h">Exporter les données</h3>
+    <p class="hint">Télécharge tout le contenu (liens privés compris) : JSON pour une sauvegarde complète, CSV pour l'ouvrir dans un tableur.</p>
+    <div class="exp"><button class="btn" data-act="export-json">⬇️ JSON</button><button class="btn" data-act="export-csv">⬇️ CSV</button></div>
+  </div>`;
+}
+
+/* ---------- formulaires ---------- */
+function openForm({ title, fields, values = {}, submitLabel = "Enregistrer", onSubmit, onInput }){
+  const dlg = $("#formDlg");
+  const body = fields.map(f => {
+    const v = values[f.name] ?? f.default ?? "";
+    const input = f.type === "file"
+      ? `<input name="${f.name}" type="file" accept="image/*"><div class="upl" data-upl></div>`
+      : f.type === "select"
+      ? `<select name="${f.name}">${f.options.map(o => `<option value="${esc(o.value)}" ${String(o.value) === String(v) ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`
+      : `<input name="${f.name}" type="${f.type || "text"}" value="${esc(v)}" ${f.required ? "required" : ""} ${f.step ? `step="${f.step}"` : ""} ${f.auto ? `autocomplete="${f.auto}"` : ""} placeholder="${esc(f.placeholder || "")}">`;
+    return `<label class="field"><span>${esc(f.label)}</span>${input}${f.hint ? `<small>${esc(f.hint)}</small>` : ""}</label>`;
+  }).join("");
+  dlg.innerHTML = `<form class="dlg"><h2>${esc(title)}</h2>${body}<div class="err" data-err></div>
+    <div class="dlg-actions"><button type="button" class="btn" data-close>Annuler</button><button type="submit" class="btn primary">${esc(submitLabel)}</button></div></form>`;
+  const form = dlg.querySelector("form");
+  form.querySelector("[data-close]").onclick = () => dlg.close();
+  if (onInput) form.addEventListener("input", e => onInput(e, form));
+  form.addEventListener("submit", async e => {
+    e.preventDefault();
+    const btn = form.querySelector("[type=submit]"), err = form.querySelector("[data-err]");
+    btn.disabled = true; err.textContent = "";
+    try { await onSubmit(Object.fromEntries(new FormData(form))); dlg.close(); }
+    catch (ex){ err.textContent = ex.message || String(ex); btn.disabled = false; }
+  });
+  dlg.showModal();
+  form.querySelector("input,select")?.focus();
+}
+
+function openLogin(){
+  if (!sb){ toast("Renseigne d'abord SUPABASE_URL et SUPABASE_KEY dans le fichier."); return; }
+  openForm({
+    title: "Connexion administrateur", submitLabel: "Se connecter",
+    fields: [
+      { name:"email", label:"E-mail", type:"email", required:true, auto:"username" },
+      { name:"password", label:"Mot de passe", type:"password", required:true, auto:"current-password" }
+    ],
+    async onSubmit(d){
+      const { error } = await sb.auth.signInWithPassword({ email: d.email.trim(), password: d.password });
+      if (error) throw new Error("Connexion refusée : vérifie l'e-mail et le mot de passe.");
+    }
+  });
+}
+
+function formMat(id){
+  const m = id && state.matieres.find(x => x.id === id);
+  openForm({
+    title: m ? "Modifier la matière" : "Nouvelle matière",
+    fields: [
+      { name:"nom", label:"Nom de la matière", required:true, placeholder:"Ex. Mathématiques" },
+      { name:"couleur", label:"Couleur", type:"color", default: PALETTE[state.matieres.length % PALETTE.length] }
+    ],
+    values: m || {},
+    async onSubmit(d){
+      const row = { nom: d.nom.trim(), couleur: d.couleur };
+      if (m) await q(sb.from("matieres").update(row).eq("id", id));
+      else await q(sb.from("matieres").insert({ ...row, ordre: nextOrdre(state.matieres) }));
+      await refresh();
+    }
+  });
+}
+
+function formSous(id, matId){
+  const s = id && state.sous.find(x => x.id === id);
+  const mid = s ? s.matiere_id : matId;
+  openForm({
+    title: s ? "Modifier la sous-matière" : "Nouvelle sous-matière",
+    fields: [{ name:"nom", label:"Nom de la sous-matière", required:true, placeholder:"Ex. Numération" }],
+    values: s || {},
+    async onSubmit(d){
+      if (s) await q(sb.from("sous_matieres").update({ nom: d.nom.trim() }).eq("id", id));
+      else await q(sb.from("sous_matieres").insert({ matiere_id: mid, nom: d.nom.trim(), ordre: nextOrdre(state.sous.filter(x => x.matiere_id === mid)) }));
+      open.add("m:" + mid);
+      await refresh();
+    }
+  });
+}
+
+function formComp(id, sousId, matId){
+  const c = id && state.comps.find(x => x.id === id);
+  const sid = c ? c.sous_matiere_id : sousId;     // compétence d'une sous-matière…
+  const mdir = c ? c.matiere_id : matId;          // …ou directement d'une matière
+  openForm({
+    title: c ? "Modifier la compétence" : "Nouvelle compétence",
+    fields: [
+      { name:"prefixe", label:"Repère avant le titre (facultatif)", placeholder:"Ex. p1, p2…", hint:"S'affiche avant le nom de la compétence, par exemple la période où tu prévois de l'aborder." },
+      { name:"titre", label:"Compétence", required:true, placeholder:"Ex. Lire et écrire les nombres jusqu'à 100" },
+      { name:"couleur_texte", label:"Couleur du texte", type:"color", default: DEF_TXT, hint:"Laisse la couleur de départ pour garder la couleur habituelle." }
+    ],
+    values: c || {},
+    async onSubmit(d){
+      const col = d.couleur_texte.toLowerCase();
+      const row = { prefixe: d.prefixe.trim() || null, titre: d.titre.trim(), couleur_texte: col === DEF_TXT ? null : col };
+      if (c) await q(sb.from("competences").update(row).eq("id", id));
+      else if (sid) await q(sb.from("competences").insert({ ...row, sous_matiere_id: sid, ordre: nextOrdre(state.comps.filter(x => x.sous_matiere_id === sid)) }));
+      else await q(sb.from("competences").insert({ ...row, matiere_id: mdir, ordre: nextOrdre(state.comps.filter(x => x.matiere_id === mdir)) }));
+      const mid = sid ? state.sous.find(x => x.id === sid)?.matiere_id : mdir;
+      if (sid) open.add("s:" + sid);
+      if (mid) open.add("m:" + mid);
+      await refresh();
+    }
+  });
+}
+
+function formBloc(id, compId){
+  const b = id && state.blocs.find(x => x.id === id);
+  const cid = b ? b.competence_id : compId;
+  openForm({
+    title: b ? "Modifier le bloc" : "Nouveau bloc",
+    fields: [{ name:"titre", label:"Titre du bloc (facultatif)", placeholder:"Ex. Jeux en ligne, Leçons, Vidéos…" }],
+    values: b || {},
+    async onSubmit(d){
+      const titre = d.titre.trim() || null;
+      if (b) await q(sb.from("blocs").update({ titre }).eq("id", id));
+      else await q(sb.from("blocs").insert({ competence_id: cid, titre, ordre: nextOrdre(state.blocs.filter(x => x.competence_id === cid)) }));
+      await refresh();
+    }
+  });
+}
+
+/* Redimensionne l'image en 480 × 300 (recadrage centré) puis l'envoie dans le bucket public « miniatures » */
+async function resizeImage(file){
+  const bmp = await createImageBitmap(file);
+  const W = 480, H = 300, ratio = Math.max(W / bmp.width, H / bmp.height);
+  const w = bmp.width * ratio, h = bmp.height * ratio;
+  const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+  const ctx = cv.getContext("2d");
+  ctx.fillStyle = "#fff"; ctx.fillRect(0, 0, W, H);
+  ctx.drawImage(bmp, (W - w) / 2, (H - h) / 2, w, h);
+  return await new Promise((ok, ko) => cv.toBlob(b => b ? ok(b) : ko(new Error("Image illisible.")), "image/jpeg", 0.85));
+}
+async function uploadThumb(file, form){
+  const box = form.querySelector("[data-upl]"), btn = form.querySelector("[type=submit]");
+  btn.disabled = true; box.textContent = "Envoi de l'image…";
+  try {
+    const blob = await resizeImage(file);
+    const path = `${crypto.randomUUID()}.jpg`;
+    const { error } = await sb.storage.from("miniatures").upload(path, blob, { contentType: "image/jpeg" });
+    if (error) throw error;
+    const { data } = sb.storage.from("miniatures").getPublicUrl(path);
+    form.elements.miniature_url.value = data.publicUrl;
+    box.textContent = "✅ Image envoyée.";
+  } catch (ex){
+    box.textContent = "⚠️ Échec de l'envoi : " + (ex.message || ex) + " (as-tu exécuté storage.sql ?)";
+  }
+  btn.disabled = false;
+}
+
+/* Liste de toutes les compétences, dans l'ordre de l'index, avec leur chemin « Matière › Sous-matière › Compétence » */
+function compEntries(){
+  const out = [], lab = c => (c.prefixe ? c.prefixe + " " : "") + c.titre;
+  state.matieres.forEach(m => {
+    state.comps.filter(c => c.matiere_id === m.id).forEach(c => out.push({ c, base: `${m.nom} › ${lab(c)}` }));
+    state.sous.filter(s => s.matiere_id === m.id).forEach(s =>
+      state.comps.filter(c => c.sous_matiere_id === s.id).forEach(c => out.push({ c, base: `${m.nom} › ${s.nom} › ${lab(c)}` })));
+  });
+  return out;
+}
+
+/* Copie un bloc (et tous ses liens) dans une autre compétence */
+function formCopyBloc(id){
+  const b = state.blocs.find(x => x.id === id);
+  if (!b) return;
+  const options = compEntries().map(({ c, base }) => ({ value: c.id, label: base }));
+  if (!options.length){ toast("Aucune compétence disponible."); return; }
+  openForm({
+    title: "Copier le bloc" + (b.titre ? ` « ${b.titre} »` : ""),
+    submitLabel: "Copier",
+    fields: [{ name:"cible", label:"Copier dans la compétence :", type:"select", options, default: b.competence_id, hint:"Le bloc et tous ses liens sont dupliqués. L'original reste en place." }],
+    async onSubmit(d){
+      const cid = d.cible;
+      const nb = await q(sb.from("blocs").insert({ competence_id: cid, titre: b.titre, ordre: nextOrdre(state.blocs.filter(x => x.competence_id === cid)) }).select().single());
+      const rows = state.liens.filter(l => l.bloc_id === id).map(l => ({ bloc_id: nb.id, titre: l.titre, url: l.url, type: l.type, miniature_url: l.miniature_url, prive: !!l.prive, ordre: l.ordre }));
+      if (rows.length) await q(sb.from("liens").insert(rows));
+      await refresh();
+      toast("Bloc copié ✅");
+    }
+  });
+}
+
+/* Copie un seul lien dans un bloc existant, ou dans un nouveau bloc d'une compétence */
+function formCopyLien(id){
+  const l = state.liens.find(x => x.id === id);
+  if (!l) return;
+  const options = [];
+  compEntries().forEach(({ c, base }) => {
+    state.blocs.filter(b => b.competence_id === c.id).forEach((b, i) =>
+      options.push({ value: "b:" + b.id, label: `${base} › ${b.titre || "bloc " + (i + 1)}` }));
+    options.push({ value: "c:" + c.id, label: `${base} › + nouveau bloc` });
+  });
+  if (!options.length){ toast("Aucune compétence disponible."); return; }
+  openForm({
+    title: `Copier le lien « ${l.titre} »`,
+    submitLabel: "Copier",
+    fields: [{ name:"cible", label:"Copier dans :", type:"select", options, default: "b:" + l.bloc_id, hint:"Le lien est dupliqué. L'original reste en place." }],
+    async onSubmit(d){
+      let bid;
+      if (d.cible.startsWith("c:")){
+        const cid = d.cible.slice(2);
+        const nb = await q(sb.from("blocs").insert({ competence_id: cid, titre: null, ordre: nextOrdre(state.blocs.filter(x => x.competence_id === cid)) }).select().single());
+        bid = nb.id;
+      } else bid = d.cible.slice(2);
+      await q(sb.from("liens").insert({ bloc_id: bid, titre: l.titre, url: l.url, type: l.type, miniature_url: l.miniature_url, prive: !!l.prive, ordre: nextOrdre(state.liens.filter(x => x.bloc_id === bid)) }));
+      await refresh();
+      toast("Lien copié ✅");
+    }
+  });
+}
+
+function formLien(id, blocId){
+  const l = id && state.liens.find(x => x.id === id);
+  const bid = l ? l.bloc_id : blocId;
+  let touched = !!l;
+  openForm({
+    title: l ? "Modifier le lien" : "Nouveau lien",
+    fields: [
+      { name:"url", label:"Adresse du lien", required:true, placeholder:"https://…", auto:"off" },
+      { name:"titre", label:"Titre affiché", required:true, placeholder:"Ex. Jeu des tables de multiplication" },
+      { name:"type", label:"Type de lien", type:"select", default:"appli", options:[
+        { value:"appli", label:"🎮 Appli / jeu en ligne" },
+        { value:"presentation", label:"📊 Présentation (PowerPoint, diaporama…)" },
+        { value:"autre", label:"🔗 Autre lien" } ] },
+      { name:"fichier", label:"Miniature : choisir une image", type:"file", hint:"Elle est redimensionnée automatiquement (480 × 300 px) puis envoyée dans Supabase. Laisse vide : l'aperçu du site est généré quand c'est possible." },
+      { name:"miniature_url", label:"…ou adresse d'une image (facultatif)", placeholder:"https://…/image.png" }
+    ],
+    values: l || {},
+    onInput(e, form){
+      if (e.target.name === "type") touched = true;
+      if (e.target.name === "url" && !touched) form.elements.type.value = guessType(e.target.value);
+      if (e.target.name === "fichier" && e.target.files[0]) uploadThumb(e.target.files[0], form);
+    },
+    async onSubmit(d){
+      const row = {
+        url: normUrl(d.url), titre: d.titre.trim(), type: d.type,
+        miniature_url: d.miniature_url.trim() ? normUrl(d.miniature_url) : null
+      };
+      if (l) await q(sb.from("liens").update(row).eq("id", id));
+      else await q(sb.from("liens").insert({ ...row, bloc_id: bid, ordre: nextOrdre(state.liens.filter(x => x.bloc_id === bid)) }));
+      await refresh();
+    }
+  });
+}
+
+/* ---------- export (administrateur : toutes les données, liens privés compris) ---------- */
+function download(name, mime, text){
+  const a = document.createElement("a");
+  a.href = URL.createObjectURL(new Blob([text], { type: mime }));
+  a.download = name; document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 4000);
+}
+const stamp = () => new Date().toISOString().slice(0, 10);
+
+function exportJSON(){
+  const lienOut = l => ({ titre: l.titre, url: l.url, type: l.type, prive: !!l.prive, miniature_url: l.miniature_url || null });
+  const compOut = c => ({
+    repere: c.prefixe || null, titre: c.titre, couleur_texte: c.couleur_texte || null,
+    blocs: state.blocs.filter(b => b.competence_id === c.id).map(b => ({
+      titre: b.titre || null, liens: state.liens.filter(l => l.bloc_id === b.id).map(lienOut) }))
+  });
+  const data = {
+    exporte_le: new Date().toISOString(),
+    matieres: state.matieres.map(m => ({
+      nom: m.nom, couleur: m.couleur, masquee: !!m.masque,
+      competences: state.comps.filter(c => c.matiere_id === m.id).map(compOut),
+      sous_matieres: state.sous.filter(s => s.matiere_id === m.id).map(s => ({
+        nom: s.nom, competences: state.comps.filter(c => c.sous_matiere_id === s.id).map(compOut) }))
+    }))
+  };
+  download(`outils-numeriques-${stamp()}.json`, "application/json", JSON.stringify(data, null, 2));
+}
+
+function exportCSV(){
+  const head = ["Matière","Sous-matière","Repère","Compétence","Bloc","Titre du lien","Adresse","Type","Privé","Miniature"];
+  const rows = [], blank = n => Array(n).fill("");
+  const addComp = (m, s, c) => {
+    const base = [m.nom, s ? s.nom : "", c.prefixe || "", c.titre];
+    const blocs = state.blocs.filter(b => b.competence_id === c.id);
+    if (!blocs.length) rows.push([...base, ...blank(6)]);
+    blocs.forEach(b => {
+      const ls = state.liens.filter(l => l.bloc_id === b.id);
+      if (!ls.length) rows.push([...base, b.titre || "", ...blank(5)]);
+      ls.forEach(l => rows.push([...base, b.titre || "", l.titre, l.url || "", LABEL[l.type] || l.type, l.prive ? "oui" : "non", l.miniature_url || ""]));
+    });
+  };
+  state.matieres.forEach(m => {
+    const direct = state.comps.filter(c => c.matiere_id === m.id);
+    const sous = state.sous.filter(s => s.matiere_id === m.id);
+    if (!direct.length && !sous.length) rows.push([m.nom, ...blank(9)]);
+    direct.forEach(c => addComp(m, null, c));
+    sous.forEach(s => {
+      const cs = state.comps.filter(c => c.sous_matiere_id === s.id);
+      if (!cs.length) rows.push([m.nom, s.nom, ...blank(8)]);
+      cs.forEach(c => addComp(m, s, c));
+    });
+  });
+  const cell = v => `"${String(v ?? "").replace(/"/g, '""')}"`;
+  // séparateur « ; » + BOM UTF-8 : s'ouvre correctement dans Excel en français
+  const text = "﻿" + [head, ...rows].map(r => r.map(cell).join(";")).join("\r\n");
+  download(`outils-numeriques-${stamp()}.csv`, "text/csv;charset=utf-8", text);
+}
+
+/* ---------- actions ---------- */
+const DEL_MSG = {
+  matieres: "Supprimer cette matière avec ses sous-matières, compétences et liens ?",
+  sous_matieres: "Supprimer cette sous-matière avec ses compétences et liens ?",
+  competences: "Supprimer cette compétence avec ses blocs et liens ?",
+  blocs: "Supprimer ce bloc et tous ses liens ?",
+  liens: "Supprimer ce lien ?"
+};
+const handlers = {
+  collapse(){            // bouton flottant : retour à l'index, tout replié
+    open.clear();
+    if (location.hash) location.hash = "";   // déclenche l'affichage de l'index
+    else render();
+    window.scrollTo({ top: 0 });
+  },
+  goto(id, t){           // fil d'Ariane : revenir à l'index avec la matière (ou la sous-matière) dépliée
+    open.clear();
+    if (t === "s"){
+      const s = state.sous.find(x => x.id === id);
+      if (s){ open.add("s:" + s.id); open.add("m:" + s.matiere_id); }
+    } else if (id) open.add("m:" + id);
+    if (location.hash) location.hash = "";
+    else render();
+    window.scrollTo({ top: 0 });
+  },
+  login(){ openLogin(); },
+  async logout(){ await sb.auth.signOut(); },
+  settings(){ renderSettings(); $("#setDlg").showModal(); },
+  "close-set"(){ $("#setDlg").close(); },
+  "add-mat"(){ formMat(); },            "edit-mat"(id){ formMat(id); },
+  "add-sous"(id){ formSous(null, id); }, "edit-sous"(id){ formSous(id); },
+  "add-comp"(id){ formComp(null, id); }, "add-comp-m"(id){ formComp(null, null, id); }, "edit-comp"(id){ formComp(id); },
+  "add-bloc"(id){ formBloc(null, id); }, "edit-bloc"(id){ formBloc(id); },
+  async "toggle-prive"(id){
+    const l = state.liens.find(x => x.id === id);
+    if (!l) return;
+    await q(sb.from("liens").update({ prive: !l.prive }).eq("id", id));
+    await refresh();
+    toast(l.prive ? "Lien rendu public" : "Lien rendu privé 🔒");
+  },
+  async "toggle-masque"(id){
+    const m = state.matieres.find(x => x.id === id);
+    if (!m) return;
+    await q(sb.from("matieres").update({ masque: !m.masque }).eq("id", id));
+    await refresh();
+    toast(m.masque ? "Matière visible par les visiteurs" : "Matière masquée aux visiteurs 🙈");
+  },
+  "export-json"(){ exportJSON(); },
+  "export-csv"(){ exportCSV(); },
+  "copy-bloc"(id){ formCopyBloc(id); },
+  "copy-lien"(id){ formCopyLien(id); },
+  "add-lien"(id){ formLien(null, id); }, "edit-lien"(id){ formLien(id); },
+  async move(id, t, dir){
+    const arr = siblings(t, id).slice();
+    const i = arr.findIndex(x => x.id === id), j = i + Number(dir);
+    if (i < 0 || j < 0 || j >= arr.length) return;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    await Promise.all(arr.map((x, k) => x.ordre === k ? null : q(sb.from(t).update({ ordre: k }).eq("id", x.id))));
+    await refresh();
+  },
+  async del(id, t){
+    if (!confirm(DEL_MSG[t])) return;
+    await q(sb.from(t).delete().eq("id", id));
+    await refresh();
+  }
+};
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-act]");
+  if (!b) return;
+  e.preventDefault();               // évite de déplier/replier un menu quand on clique un bouton dans son titre
+  const { act, id, t, dir } = b.dataset;
+  try { await handlers[act]?.(id, t, dir); }
+  catch (err){ notify(err.message || String(err)); }
+});
+// mémorise les menus déroulés pour les retrouver (retour arrière, ajout d'un élément…)
+document.addEventListener("toggle", e => {
+  const k = e.target?.dataset?.k;
+  if (!k) return;
+  if (e.target.open) open.add(k); else open.delete(k);
+}, true);
+// changement de page (index <-> compétence), y compris avec le bouton « retour » du navigateur
+window.addEventListener("hashchange", () => { render(); window.scrollTo({ top: 0 }); });
+
+/* ---------- démarrage ---------- */
+(async function init(){
+  if (!sb){
+    $("#banner").innerHTML = `<div class="banner">⚙️ Configuration requise : ouvre le fichier <b>index.html</b> et remplace <b>SUPABASE_URL</b> et <b>SUPABASE_KEY</b> (en haut du script) par ceux de ton projet Supabase.</div>`;
+    state.loading = false; render(); return;
+  }
+  try {
+    const { data } = await sb.auth.getSession();
+    state.admin = !!data.session;
+    sb.auth.onAuthStateChange((_evt, session) => {
+      const was = state.admin;
+      state.admin = !!session;
+      if (!session && $("#setDlg").open) $("#setDlg").close();
+      render();
+      if (was !== state.admin) loadAll().then(render).catch(err => toast(err.message || String(err)));   // recharge : l'admin voit toutes les adresses
+    });
+    await loadAll();
+  } catch (err){
+    $("#banner").innerHTML = `<div class="banner">Impossible de charger les données (${esc(err.message || err)}). As-tu bien exécuté le script <b>supabase.sql</b> dans ton projet ?</div>`;
+  }
+  state.loading = false; render();
+})();
+</script>
+</body>
+</html>
