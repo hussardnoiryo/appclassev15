@@ -134,6 +134,15 @@ dialog::backdrop{background:rgba(31,35,64,.5)}
 .err{color:#d92d4f;min-height:1.2em;font-weight:600;margin:4px 0}
 .dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
 
+#inbDlg{width:min(660px,94vw)}
+.ibx{position:relative}
+.bdg{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;border-radius:999px;background:#ff3b6b;color:#fff;font-size:.7rem;font-weight:700;display:grid;place-items:center;padding:0 5px;box-shadow:0 0 0 2px #a45cff}
+.propose{text-align:center;margin:22px 0 0}
+.prop{border:1px solid var(--line);border-radius:14px;padding:12px;margin-bottom:10px}
+.prop-t{display:flex;justify-content:space-between;gap:10px;align-items:baseline}
+.prop-d{color:var(--muted);font-size:.8rem;flex:none}
+.prop-m{color:var(--muted);font-size:.9rem;margin-top:3px}
+.prop a{color:var(--brand);font-weight:600;word-break:break-all}
 .set-h{margin:22px 0 4px;font-family:"Outfit","DM Sans",sans-serif;font-size:1.05rem}
 .exp{display:flex;gap:8px;flex-wrap:wrap}
 .set-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
@@ -166,13 +175,14 @@ dialog::backdrop{background:rgba(31,35,64,.5)}
 
 <dialog id="formDlg"></dialog>
 <dialog id="setDlg"></dialog>
+<dialog id="inbDlg"></dialog>
 <div id="toast" role="status"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============ CONFIGURATION SUPABASE (à remplacer) ============ */
-const SUPABASE_URL = "https://sipewpaczrawlpgajylg.supabase.co";
-const SUPABASE_KEY = "sb_publishable_0A0Jgh1qH7jH5YaFlnEWew_bsKn20hF";
+const SUPABASE_URL = "https://VOTRE-PROJET.supabase.co";
+const SUPABASE_KEY = "VOTRE_CLE_ANON_PUBLIQUE";
 /* ================================================================ */
 
 const configured = !SUPABASE_URL.includes("VOTRE-PROJET") && !SUPABASE_KEY.includes("VOTRE_CLE");
@@ -185,7 +195,7 @@ const ICON  = { appli: "🎮", presentation: "📊", autre: "🔗" };
 const EDIT  = { matieres:"edit-mat", sous_matieres:"edit-sous", competences:"edit-comp", blocs:"edit-bloc", liens:"edit-lien" };
 const KEY   = { matieres:"matieres", sous_matieres:"sous", competences:"comps", blocs:"blocs", liens:"liens" };
 
-const state = { matieres:[], sous:[], comps:[], blocs:[], liens:[], admin:false, loading:true };
+const state = { matieres:[], sous:[], comps:[], blocs:[], liens:[], props:[], admin:false, loading:true };
 const open = new Set();   // menus déroulés de l'index : "m:<id>", "s:<id>"
 
 /* ---------- utilitaires ---------- */
@@ -233,10 +243,17 @@ async function loadAll(){
   state.comps    = res[2].data.sort(byOrdre);
   state.blocs    = res[3].data.sort(byOrdre);
   state.liens    = res[4].data.sort(byOrdre);
+  // propositions des visiteurs : seul l'administrateur peut les lire (tolérant si la table n'existe pas encore)
+  state.props = [];
+  if (state.admin){
+    const pr = await sb.from("propositions").select("*").order("created_at", { ascending: false });
+    if (!pr.error) state.props = pr.data;
+  }
 }
 async function refresh(){
   await loadAll(); render();
   if ($("#setDlg").open) renderSettings();
+  if ($("#inbDlg").open) renderInbox();
 }
 function siblings(t, id){
   const it = state[KEY[t]].find(x => x.id === id);
@@ -260,10 +277,12 @@ function renderHeader(){
   const a = $("#actions");
   if (state.admin){
     a.innerHTML = `<span class="chip chip-d">Mode administrateur</span>
+      <button class="btn ibtn ibx" data-act="inbox" title="Propositions des visiteurs" aria-label="Propositions des visiteurs">📥${state.props.length ? `<span class="bdg">${state.props.length}</span>` : ""}</button>
       <button class="btn ibtn" data-act="settings" title="Paramètres" aria-label="Paramètres">⚙️</button>
       <button class="btn ibtn" data-act="logout" title="Se déconnecter (mode administrateur)" aria-label="Se déconnecter du mode administrateur">🚪</button>`;
   } else {
-    a.innerHTML = `<button class="btn ibtn" data-act="login" title="Connexion administrateur" aria-label="Connexion administrateur">🔐</button>`;
+    a.innerHTML = `<button class="btn ibtn" data-act="propose" title="Proposer un lien" aria-label="Proposer un lien">💡</button>
+      <button class="btn ibtn" data-act="login" title="Connexion administrateur" aria-label="Connexion administrateur">🔐</button>`;
   }
 }
 
@@ -337,7 +356,8 @@ function indexHTML(){
       ? `<p class="empty">Aucune matière pour l'instant. Ouvre « ⚙️ Paramètres » pour créer tes matières et sous-matières.</p>`
       : `<p class="empty">Aucune ressource pour l'instant.</p>`;
   }
-  return `<div class="menu">${state.matieres.map(matHTML).join("")}</div>`;
+  return `<div class="menu">${state.matieres.map(matHTML).join("")}</div>`
+    + (state.admin ? "" : `<p class="propose"><button class="btn" data-act="propose">💡 Proposer un lien</button></p>`);
 }
 
 /* ----- Page 2 : une compétence et ses blocs de liens ----- */
@@ -627,6 +647,104 @@ function formLien(id, blocId){
   });
 }
 
+/* ---------- propositions de liens par les visiteurs ---------- */
+function formPropose(){
+  if (!sb){ toast("Renseigne d'abord SUPABASE_URL et SUPABASE_KEY dans le fichier."); return; }
+  const options = [{ value: "", label: "Je ne sais pas / autre" }].concat(compEntries().map(({ c, base }) => ({ value: c.id, label: base })));
+  let touched = false;
+  openForm({
+    title: "💡 Proposer un lien",
+    submitLabel: "Envoyer",
+    fields: [
+      { name:"url", label:"Adresse du lien", required:true, placeholder:"https://…", auto:"off" },
+      { name:"titre", label:"Titre", required:true, placeholder:"Ex. Jeu des tables de multiplication" },
+      { name:"type", label:"Type de lien", type:"select", default:"appli", options:[
+        { value:"appli", label:"🎮 Appli / jeu en ligne" },
+        { value:"presentation", label:"📊 Présentation (PowerPoint, diaporama…)" },
+        { value:"autre", label:"🔗 Autre lien" } ] },
+      { name:"competence_id", label:"Pour quelle compétence ? (facultatif)", type:"select", options, default:"" },
+      { name:"commentaire", label:"Un petit mot (facultatif)", placeholder:"Ex. Je l'utilise en ateliers" },
+      { name:"nom", label:"Ton prénom (facultatif)" }
+    ],
+    onInput(e, form){
+      if (e.target.name === "type") touched = true;
+      if (e.target.name === "url" && !touched) form.elements.type.value = guessType(e.target.value);
+    },
+    async onSubmit(d){
+      if (d.site_web) return;   // champ piège invisible : seuls les robots le remplissent
+      let last = 0; try { last = Number(localStorage.getItem("lastProp") || 0); } catch {}
+      if (Date.now() - last < 20000) throw new Error("Patiente quelques secondes avant d'envoyer une autre proposition.");
+      const row = {
+        url: normUrl(d.url), titre: d.titre.trim().slice(0, 120), type: d.type,
+        competence_id: d.competence_id || null,
+        commentaire: d.commentaire.trim().slice(0, 300) || null, nom: d.nom.trim().slice(0, 60) || null
+      };
+      if (row.url.length > 500) throw new Error("Adresse trop longue.");
+      await q(sb.from("propositions").insert(row));
+      try { localStorage.setItem("lastProp", String(Date.now())); } catch {}
+      toast("Merci ! Ta proposition a bien été envoyée 🙏");
+    }
+  });
+  $("#formDlg form").insertAdjacentHTML("afterbegin", `<input name="site_web" tabindex="-1" autocomplete="off" aria-hidden="true" style="position:absolute;left:-9999px;opacity:0">`);
+}
+
+function renderInbox(){
+  const d = $("#inbDlg"), entries = compEntries();
+  d.innerHTML = `<div class="dlg">
+    <div class="set-head"><h2>📥 Propositions</h2><button class="btn small" data-act="close-inb">Fermer</button></div>
+    <p class="hint">Liens proposés par les visiteurs. Rien n'est visible publiquement tant que tu ne l'as pas ajouté.</p>
+    ${state.props.map(p => {
+      const where = entries.find(x => x.c.id === p.competence_id)?.base;
+      return `<div class="prop">
+        <div class="prop-t"><strong>${esc(p.titre)}</strong><span class="prop-d">${esc(new Date(p.created_at).toLocaleDateString("fr-FR"))}</span></div>
+        <a href="${esc(p.url)}" target="_blank" rel="noopener noreferrer" title="${esc(p.url)}">${esc(hostOf(p.url) || p.url)}</a> · ${esc(LABEL[p.type] || p.type)}
+        ${where ? `<div class="prop-m">Pour : ${esc(where)}</div>` : ""}
+        ${p.commentaire ? `<div class="prop-m">« ${esc(p.commentaire)} »</div>` : ""}
+        ${p.nom ? `<div class="prop-m">De la part de ${esc(p.nom)}</div>` : ""}
+        <div class="ctl" style="margin-top:8px"><button class="btn small primary" data-act="accept-prop" data-id="${p.id}">✅ Ajouter</button><button class="btn small" data-act="del-prop" data-id="${p.id}">🗑️ Supprimer</button></div>
+      </div>`;
+    }).join("") || `<p class="empty">Aucune proposition pour l'instant.</p>`}
+  </div>`;
+}
+
+function formAcceptProp(id){
+  const p = state.props.find(x => x.id === id);
+  if (!p) return;
+  const options = [];
+  compEntries().forEach(({ c, base }) => {
+    state.blocs.filter(b => b.competence_id === c.id).forEach((b, i) =>
+      options.push({ value: "b:" + b.id, label: `${base} › ${b.titre || "bloc " + (i + 1)}` }));
+    options.push({ value: "c:" + c.id, label: `${base} › + nouveau bloc` });
+  });
+  if (!options.length){ toast("Crée d'abord une compétence."); return; }
+  const first = p.competence_id && options.find(o => o.value.endsWith(p.competence_id) || state.blocs.some(b => b.competence_id === p.competence_id && o.value === "b:" + b.id));
+  openForm({
+    title: "Ajouter cette proposition",
+    submitLabel: "Ajouter",
+    fields: [
+      { name:"titre", label:"Titre", required:true, default: p.titre },
+      { name:"url", label:"Adresse du lien", required:true, default: p.url },
+      { name:"type", label:"Type de lien", type:"select", default: p.type, options:[
+        { value:"appli", label:"🎮 Appli / jeu en ligne" },
+        { value:"presentation", label:"📊 Présentation (PowerPoint, diaporama…)" },
+        { value:"autre", label:"🔗 Autre lien" } ] },
+      { name:"cible", label:"Ajouter dans :", type:"select", options, default: (first || options[0]).value }
+    ],
+    async onSubmit(d){
+      let bid;
+      if (d.cible.startsWith("c:")){
+        const cid = d.cible.slice(2);
+        const nb = await q(sb.from("blocs").insert({ competence_id: cid, titre: null, ordre: nextOrdre(state.blocs.filter(x => x.competence_id === cid)) }).select().single());
+        bid = nb.id;
+      } else bid = d.cible.slice(2);
+      await q(sb.from("liens").insert({ bloc_id: bid, titre: d.titre.trim(), url: normUrl(d.url), type: d.type, ordre: nextOrdre(state.liens.filter(x => x.bloc_id === bid)) }));
+      await q(sb.from("propositions").delete().eq("id", id));
+      await refresh();
+      toast("Lien ajouté ✅");
+    }
+  });
+}
+
 /* ---------- export (administrateur : toutes les données, liens privés compris) ---------- */
 function download(name, mime, text){
   const a = document.createElement("a");
@@ -731,6 +849,15 @@ const handlers = {
     await q(sb.from("matieres").update({ masque: !m.masque }).eq("id", id));
     await refresh();
     toast(m.masque ? "Matière visible par les visiteurs" : "Matière masquée aux visiteurs 🙈");
+  },
+  propose(){ formPropose(); },
+  inbox(){ renderInbox(); $("#inbDlg").showModal(); },
+  "close-inb"(){ $("#inbDlg").close(); },
+  "accept-prop"(id){ formAcceptProp(id); },
+  async "del-prop"(id){
+    if (!confirm("Supprimer cette proposition ?")) return;
+    await q(sb.from("propositions").delete().eq("id", id));
+    await refresh();
   },
   "export-json"(){ exportJSON(); },
   "export-csv"(){ exportCSV(); },
