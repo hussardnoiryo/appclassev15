@@ -135,6 +135,10 @@ dialog::backdrop{background:rgba(31,35,64,.5)}
 .dlg-actions{display:flex;justify-content:flex-end;gap:8px;margin-top:8px}
 
 #inbDlg{width:min(660px,94vw)}
+.ic.add{color:var(--accent);border-color:color-mix(in srgb,var(--accent) 45%,#fff);font-size:1.15rem;font-weight:700}
+.ic.add:hover{background:color-mix(in srgb,var(--accent) 12%,#fff);color:var(--accent)}
+.choice{display:flex;flex-direction:column;gap:10px;margin-bottom:6px}
+.choice .btn{padding:12px 16px;text-align:left;font-size:1rem}
 .ibx{position:relative}
 .bdg{position:absolute;top:-5px;right:-5px;min-width:19px;height:19px;border-radius:999px;background:#ff3b6b;color:#fff;font-size:.7rem;font-weight:700;display:grid;place-items:center;padding:0 5px;box-shadow:0 0 0 2px #a45cff}
 .propose{text-align:center;margin:22px 0 0}
@@ -181,8 +185,8 @@ dialog::backdrop{background:rgba(31,35,64,.5)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============ CONFIGURATION SUPABASE (à remplacer) ============ */
-const SUPABASE_URL = "https://sipewpaczrawlpgajylg.supabase.co";
-const SUPABASE_KEY = "sb_publishable_0A0Jgh1qH7jH5YaFlnEWew_bsKn20hF";
+const SUPABASE_URL = "https://VOTRE-PROJET.supabase.co";
+const SUPABASE_KEY = "VOTRE_CLE_ANON_PUBLIQUE";
 /* ================================================================ */
 
 const configured = !SUPABASE_URL.includes("VOTRE-PROJET") && !SUPABASE_KEY.includes("VOTRE_CLE");
@@ -332,7 +336,7 @@ function sousHTML(s){
   const k = "s:" + s.id;
   return `<details class="m2" data-k="${k}" ${op(k)}>
     <summary><span class="chev">▸</span><span class="sum-title">${esc(s.nom)}</span>
-      ${state.admin ? `<button class="btn small" data-act="add-comp" data-id="${s.id}">+ Compétence</button>` : ""}
+      ${state.admin ? `<button class="ic add" data-act="add-comp" data-id="${s.id}" title="Ajouter une compétence" aria-label="Ajouter une compétence">＋</button>` : ""}
     </summary>
     <div class="sub">${comps.map(leafHTML).join("") || `<p class="empty">Aucune compétence pour l'instant.</p>`}</div>
   </details>`;
@@ -344,7 +348,7 @@ function matHTML(m){
   const direct = state.comps.filter(c => c.matiere_id === m.id);   // compétences rattachées directement à la matière (sans sous-matière)
   return `<details class="m1" data-k="${k}" ${op(k)} style="--accent:${safeColor(m.couleur)}">
     <summary><span class="dotc"></span><span class="chev">▸</span><span class="sum-title">${esc(m.nom)}${m.masque ? ` <span class="priv">🙈 Masquée</span>` : ""}</span>
-      ${state.admin ? `<button class="btn small" data-act="add-comp-m" data-id="${m.id}">+ Compétence</button><button class="btn small" data-act="add-sous" data-id="${m.id}">+ Sous-matière</button>` : ""}
+      ${state.admin ? `<button class="ic add" data-act="add-menu" data-id="${m.id}" title="Ajouter une compétence ou une sous-matière" aria-label="Ajouter une compétence ou une sous-matière">＋</button>` : ""}
     </summary>
     <div class="sub">${direct.map(leafHTML).join("")}${sous.map(sousHTML).join("") || (direct.length ? "" : `<p class="empty">Rien pour l'instant.</p>`)}</div>
   </details>`;
@@ -647,6 +651,21 @@ function formLien(id, blocId){
   });
 }
 
+/* Petit choix après un clic sur ＋ à côté d'une matière : compétence ou sous-matière ? */
+function chooseAdd(matId){
+  const dlg = $("#formDlg");
+  dlg.innerHTML = `<div class="dlg"><h2>Ajouter…</h2>
+    <div class="choice"><button class="btn" data-pick="comp">📌 Une compétence</button><button class="btn" data-pick="sous">📁 Une sous-matière</button></div>
+    <div class="dlg-actions"><button class="btn" data-pick="x">Annuler</button></div></div>`;
+  dlg.querySelectorAll("[data-pick]").forEach(b => b.onclick = () => {
+    const p = b.dataset.pick;
+    dlg.close();
+    if (p === "comp") formComp(null, null, matId);
+    else if (p === "sous") formSous(null, matId);
+  });
+  dlg.showModal();
+}
+
 /* ---------- propositions de liens par les visiteurs ---------- */
 function formPropose(){
   if (!sb){ toast("Renseigne d'abord SUPABASE_URL et SUPABASE_KEY dans le fichier."); return; }
@@ -850,6 +869,7 @@ const handlers = {
     await refresh();
     toast(m.masque ? "Matière visible par les visiteurs" : "Matière masquée aux visiteurs 🙈");
   },
+  "add-menu"(id){ chooseAdd(id); },
   propose(){ formPropose(); },
   inbox(){ renderInbox(); $("#inbDlg").showModal(); },
   "close-inb"(){ $("#inbDlg").close(); },
