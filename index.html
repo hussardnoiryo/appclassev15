@@ -181,8 +181,8 @@ dialog::backdrop{background:rgba(31,35,64,.5)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============ CONFIGURATION SUPABASE (à remplacer) ============ */
-const SUPABASE_URL = "https://sipewpaczrawlpgajylg.supabase.co";
-const SUPABASE_KEY = "sb_publishable_0A0Jgh1qH7jH5YaFlnEWew_bsKn20hF";
+const SUPABASE_URL = "https://VOTRE-PROJET.supabase.co";
+const SUPABASE_KEY = "VOTRE_CLE_ANON_PUBLIQUE";
 /* ================================================================ */
 
 const configured = !SUPABASE_URL.includes("VOTRE-PROJET") && !SUPABASE_KEY.includes("VOTRE_CLE");
@@ -894,7 +894,20 @@ document.addEventListener("keydown", e => {
 document.addEventListener("toggle", e => {
   const k = e.target?.dataset?.k;
   if (!k) return;
-  if (e.target.open) open.add(k); else open.delete(k);
+  if (e.target.open){
+    // une seule matière dépliée à la fois : les autres se replient
+    if (k.startsWith("m:")){
+      [...open].forEach(o => { if (o.startsWith("m:") && o !== k) open.delete(o); });
+      document.querySelectorAll("details.m1[open]").forEach(d => { if (d !== e.target) d.open = false; });
+    }
+    // idem pour les sous-matières d'une même matière
+    if (k.startsWith("s:")){
+      e.target.parentElement?.querySelectorAll(":scope > details.m2[open]").forEach(d => {
+        if (d !== e.target){ open.delete(d.dataset.k); d.open = false; }
+      });
+    }
+    open.add(k);
+  } else open.delete(k);
 }, true);
 // changement de page (index <-> compétence), y compris avec le bouton « retour » du navigateur
 window.addEventListener("hashchange", () => { render(); window.scrollTo({ top: 0 }); });
