@@ -119,6 +119,9 @@ header.top .actions{cursor:default;flex:none;flex-wrap:nowrap;gap:6px}
 /* Bouton flottant : revenir à l'index replié (présent sur toutes les pages) */
 .fab{position:fixed;right:18px;bottom:22px;z-index:30;border:none;background:linear-gradient(110deg,#6d5efc,#ff6b9d);color:#fff;border-radius:999px;padding:13px 22px;font-weight:700;font-size:1rem;box-shadow:0 10px 26px rgba(109,94,252,.45);display:flex;gap:8px;align-items:center}
 .fab:hover{filter:brightness(1.08)}
+/* Bouton « remonter » : apparaît après un peu de défilement, juste au-dessus du bouton Index */
+.totop{position:fixed;right:22px;bottom:84px;z-index:29;width:44px;height:44px;border-radius:50%;border:1px solid var(--line);background:#fff;color:var(--brand);font-size:1.3rem;font-weight:700;line-height:1;display:grid;place-items:center;box-shadow:0 6px 18px rgba(80,70,180,.25);opacity:0;transform:translateY(10px);pointer-events:none;transition:opacity .2s,transform .2s}
+.totop.show{opacity:1;transform:none;pointer-events:auto}
 
 dialog{border:none;border-radius:22px;padding:0;width:min(520px,92vw);max-height:90vh;box-shadow:0 24px 70px rgba(40,30,120,.35);color:var(--ink)}
 dialog::backdrop{background:rgba(31,35,64,.5)}
@@ -177,6 +180,8 @@ dialog::backdrop{background:rgba(31,35,64,.5)}
 
 <button class="fab" id="fab" data-act="collapse" title="Revenir à l'index" aria-label="Revenir à l'index">☰ Index</button>
 
+<button class="totop" id="totop" data-act="top" title="Remonter en haut de la page" aria-label="Remonter en haut de la page">↑</button>
+
 <dialog id="formDlg"></dialog>
 <dialog id="setDlg"></dialog>
 <dialog id="inbDlg"></dialog>
@@ -185,8 +190,8 @@ dialog::backdrop{background:rgba(31,35,64,.5)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============ CONFIGURATION SUPABASE (à remplacer) ============ */
-const SUPABASE_URL = "https://sipewpaczrawlpgajylg.supabase.co";
-const SUPABASE_KEY = "sb_publishable_0A0Jgh1qH7jH5YaFlnEWew_bsKn20hF";
+const SUPABASE_URL = "https://VOTRE-PROJET.supabase.co";
+const SUPABASE_KEY = "VOTRE_CLE_ANON_PUBLIQUE";
 /* ================================================================ */
 
 const configured = !SUPABASE_URL.includes("VOTRE-PROJET") && !SUPABASE_KEY.includes("VOTRE_CLE");
@@ -869,6 +874,7 @@ const handlers = {
     await refresh();
     toast(m.masque ? "Matière visible par les visiteurs" : "Matière masquée aux visiteurs 🙈");
   },
+  top(){ window.scrollTo({ top: 0, behavior: "smooth" }); },
   "add-menu"(id){ chooseAdd(id); },
   propose(){ formPropose(); },
   inbox(){ renderInbox(); $("#inbDlg").showModal(); },
@@ -931,6 +937,9 @@ document.addEventListener("toggle", e => {
 }, true);
 // changement de page (index <-> compétence), y compris avec le bouton « retour » du navigateur
 window.addEventListener("hashchange", () => { render(); window.scrollTo({ top: 0 }); });
+
+// le bouton « remonter » n'apparaît qu'après avoir un peu défilé
+window.addEventListener("scroll", () => $("#totop").classList.toggle("show", window.scrollY > 400), { passive: true });
 
 /* ---------- démarrage ---------- */
 (async function init(){
