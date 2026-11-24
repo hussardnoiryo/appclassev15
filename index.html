@@ -103,11 +103,19 @@ header.top .actions{cursor:default;flex:none;flex-wrap:nowrap;gap:6px}
 .thumb.appli{background:linear-gradient(135deg,#dfe9ff,#bcb6ff)}
 .thumb.presentation{background:linear-gradient(135deg,#ffe9d2,#ffb3c8)}
 .thumb.autre{background:linear-gradient(135deg,#e8f7f2,#bfe8dc)}
+.thumb.pdf{background:linear-gradient(135deg,#ffe3e3,#ffb8b8)}
+.thumb.video{background:linear-gradient(135deg,#dff3ff,#9fd6ff)}
+.thumb.audio{background:linear-gradient(135deg,#fff3c9,#ffd97a)}
+.thumb.image{background:linear-gradient(135deg,#e6f7e1,#b7e4a8)}
 .thumb img{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:top}
 .ticon{font-size:2.3rem}
 .badge{position:absolute;top:8px;left:8px;z-index:2;font-size:.72rem;font-weight:700;padding:3px 10px;border-radius:999px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
 .badge.appli{background:#4f46e5;color:#fff}
 .badge.presentation{background:#f2557f;color:#fff}
+.badge.pdf{background:#b91c1c;color:#fff}
+.badge.video{background:#0369a1;color:#fff}
+.badge.audio{background:#b45309;color:#fff}
+.badge.image{background:#15803d;color:#fff}
 .badge.autre{background:#0f9e82;color:#fff}
 
 .ctl{display:inline-flex;gap:4px;align-items:center}
@@ -152,6 +160,14 @@ dialog::backdrop{background:rgba(31,35,64,.5)}
 .prop a{color:var(--brand);font-weight:600;word-break:break-all}
 .set-h{margin:22px 0 4px;font-family:"Outfit","DM Sans",sans-serif;font-size:1.05rem}
 .exp{display:flex;gap:8px;flex-wrap:wrap}
+.def-row{display:flex;align-items:center;gap:10px;margin:10px 0}
+.def-prev{width:76px;flex:none;border-radius:10px}
+.def-prev .ticon{font-size:1.5rem}
+.def-t{flex:1;min-width:0;display:flex;flex-direction:column}
+.filebtn{position:relative;display:inline-block;cursor:pointer}
+.vh{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer}
+.dest{border:1px solid var(--line);border-radius:14px;margin:4px 0 12px;padding:10px 12px 0}
+.dest legend{font-weight:700;font-size:.85rem;color:var(--muted);padding:0 6px}
 .set-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px}
 .set-head h2{margin:0}
 .hint{color:var(--muted);margin:0 0 14px}
@@ -190,8 +206,8 @@ dialog::backdrop{background:rgba(31,35,64,.5)}
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 /* ============ CONFIGURATION SUPABASE (à remplacer) ============ */
-const SUPABASE_URL = "https://sipewpaczrawlpgajylg.supabase.co";
-const SUPABASE_KEY = "sb_publishable_0A0Jgh1qH7jH5YaFlnEWew_bsKn20hF";
+const SUPABASE_URL = "https://VOTRE-PROJET.supabase.co";
+const SUPABASE_KEY = "VOTRE_CLE_ANON_PUBLIQUE";
 /* ================================================================ */
 
 const configured = !SUPABASE_URL.includes("VOTRE-PROJET") && !SUPABASE_KEY.includes("VOTRE_CLE");
@@ -199,12 +215,21 @@ const sb = configured ? supabase.createClient(SUPABASE_URL, SUPABASE_KEY) : null
 
 const PALETTE = ["#6d5efc","#ff6b6b","#00b894","#fdab29","#0abde3","#e056a0","#ff7f50"];
 const DEF_TXT = "#1f2340";   // couleur de texte par défaut des compétences
-const LABEL = { appli: "Appli", presentation: "Présentation", autre: "Autre lien" };
-const ICON  = { appli: "🎮", presentation: "📊", autre: "🔗" };
+const LABEL = { appli: "Appli", presentation: "Présentation", pdf: "PDF", video: "Vidéo", audio: "Audio", image: "Image", autre: "Autre lien" };
+const ICON  = { appli: "🎮", presentation: "📊", pdf: "📄", video: "🎬", audio: "🎧", image: "🖼️", autre: "🔗" };
+const TYPE_OPTIONS = [
+  { value:"appli", label:"🎮 Appli / jeu en ligne" },
+  { value:"presentation", label:"📊 Présentation (PowerPoint, diaporama…)" },
+  { value:"pdf", label:"📄 Document PDF" },
+  { value:"video", label:"🎬 Vidéo" },
+  { value:"audio", label:"🎧 Audio / son" },
+  { value:"image", label:"🖼️ Image" },
+  { value:"autre", label:"🔗 Autre lien" }
+];
 const EDIT  = { matieres:"edit-mat", sous_matieres:"edit-sous", competences:"edit-comp", blocs:"edit-bloc", liens:"edit-lien" };
 const KEY   = { matieres:"matieres", sous_matieres:"sous", competences:"comps", blocs:"blocs", liens:"liens" };
 
-const state = { matieres:[], sous:[], comps:[], blocs:[], liens:[], props:[], admin:false, loading:true };
+const state = { matieres:[], sous:[], comps:[], blocs:[], liens:[], props:[], defaults:{}, admin:false, loading:true };
 const open = new Set();   // menus déroulés de l'index : "m:<id>", "s:<id>"
 
 /* ---------- utilitaires ---------- */
@@ -228,6 +253,10 @@ function guessType(url){
   const u = String(url || "").toLowerCase();
   if (/\.(pptx?|pps|ppsx|odp|key)(\?|#|$)/.test(u) ||
       /docs\.google\.com\/presentation|canva\.com|genial\.ly|slideshare|prezi\.com|office\.com|powerpoint|slides\.com|pagedeslides/.test(u)) return "presentation";
+  if (/\.pdf(\?|#|$)/.test(u)) return "pdf";
+  if (/\.(mp4|webm|mov|m4v)(\?|#|$)/.test(u) || /youtube\.com|youtu\.be|vimeo\.com|dailymotion\.com|peertube|tube\./.test(u)) return "video";
+  if (/\.(mp3|wav|ogg|m4a|aac)(\?|#|$)/.test(u) || /spotify\.com|soundcloud\.com|deezer\.com|podcast/.test(u)) return "audio";
+  if (/\.(jpe?g|png|gif|webp|svg|avif)(\?|#|$)/.test(u)) return "image";
   return "appli";
 }
 async function q(p){ const { data, error } = await p; if (error) throw error; return data; }
@@ -258,6 +287,10 @@ async function loadAll(){
     const pr = await sb.from("propositions").select("*").order("created_at", { ascending: false });
     if (!pr.error) state.props = pr.data;
   }
+  // miniatures par défaut de chaque type de lien (tolérant si la table n'existe pas encore)
+  state.defaults = {};
+  const df = await sb.from("miniatures_defaut").select("*");
+  if (!df.error) df.data.forEach(r => { state.defaults[r.type] = r.url; });
 }
 async function refresh(){
   await loadAll(); render();
@@ -295,17 +328,22 @@ function renderHeader(){
   }
 }
 
+// image de la carte : miniature choisie, sinon image par défaut du type (⚙️ Paramètres), sinon icône sur fond coloré
+const isImageUrl = u => /\.(jpe?g|png|gif|webp|svg|avif)(\?|#|$)/i.test(u || "");
+const thumbSrc = l => l.miniature_url
+  || (l.type === "image" && isImageUrl(l.url) ? l.url : "")   // un lien « image » s'affiche lui-même
+  || state.defaults[LABEL[l.type] ? l.type : "autre"] || "";
+
 function thumbHTML(l){
   const type = LABEL[l.type] ? l.type : "autre";
-  const isFile = /\.(pptx?|ppsx?)(\?|#|$)/i.test(l.url);
-  const src = l.miniature_url || (isFile ? "" : `https://image.thum.io/get/width/480/crop/300/noanimate/${l.url}`);
+  const src = thumbSrc(l);
   return `<div class="thumb ${type}"><span class="ticon">${ICON[type]}</span>${src ? `<img loading="lazy" alt="" src="${esc(src)}" onerror="this.remove()">` : ""}<span class="badge ${type}">${LABEL[type]}</span></div>`;
 }
 
 function lienHTML(l){
   if (l.prive && !state.admin)   // visiteur : carte visible mais non cliquable (l'adresse n'est même pas transmise)
     return `<div class="lien locked" aria-disabled="true">
-      <div class="thumb ${LABEL[l.type] ? l.type : "autre"}"><span class="ticon">🔒</span>${l.miniature_url ? `<img loading="lazy" alt="" src="${esc(l.miniature_url)}" onerror="this.remove()">` : ""}<span class="badge priv-b">🔒 Privé</span></div>
+      <div class="thumb ${LABEL[l.type] ? l.type : "autre"}"><span class="ticon">🔒</span>${thumbSrc(l) ? `<img loading="lazy" alt="" src="${esc(thumbSrc(l))}" onerror="this.remove()">` : ""}<span class="badge priv-b">🔒 Privé</span></div>
       <span class="lien-title">${esc(l.titre)}</span>
     </div>`;
   return `<div class="lien">
@@ -408,6 +446,14 @@ function renderSettings(){
       </div>`;
     }).join("")}
     <button class="btn primary" data-act="add-mat">+ Nouvelle matière</button>
+    <h3 class="set-h">Miniatures par défaut</h3>
+    <p class="hint">Image affichée pour un lien de ce type quand tu n'as pas choisi de miniature. Elle s'applique aussi aux liens déjà créés. Sans image, une simple icône sur fond coloré s'affiche.</p>
+    ${TYPE_OPTIONS.map(o => { const u = state.defaults[o.value]; return `<div class="def-row">
+      <div class="thumb ${o.value} def-prev"><span class="ticon">${ICON[o.value]}</span>${u ? `<img alt="" src="${esc(u)}" onerror="this.remove()">` : ""}</div>
+      <div class="def-t"><strong>${esc(LABEL[o.value])}</strong><span class="upl" data-upl-def="${o.value}"></span></div>
+      <label class="btn small filebtn">Choisir<input class="vh" type="file" accept="image/*" data-deftype="${o.value}"></label>
+      ${u ? `<button class="btn small" data-act="del-default" data-id="${o.value}">Retirer</button>` : ""}
+    </div>`; }).join("")}
     <h3 class="set-h">Exporter les données</h3>
     <p class="hint">Télécharge tout le contenu (liens privés compris) : JSON pour une sauvegarde complète, CSV pour l'ouvrir dans un tableur.</p>
     <div class="exp"><button class="btn" data-act="export-json">⬇️ JSON</button><button class="btn" data-act="export-csv">⬇️ CSV</button></div>
@@ -415,17 +461,19 @@ function renderSettings(){
 }
 
 /* ---------- formulaires ---------- */
+function fieldHTML(f, values = {}){
+  const v = values[f.name] ?? f.default ?? "";
+  const input = f.type === "file"
+    ? `<input name="${f.name}" type="file" accept="image/*"><div class="upl" data-upl></div>`
+    : f.type === "select"
+    ? `<select name="${f.name}">${f.options.map(o => `<option value="${esc(o.value)}" ${String(o.value) === String(v) ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`
+    : `<input name="${f.name}" type="${f.type || "text"}" value="${esc(v)}" ${f.required ? "required" : ""} ${f.step ? `step="${f.step}"` : ""} ${f.auto ? `autocomplete="${f.auto}"` : ""} placeholder="${esc(f.placeholder || "")}">`;
+  return `<label class="field"><span>${esc(f.label)}</span>${input}${f.hint ? `<small>${esc(f.hint)}</small>` : ""}</label>`;
+}
+
 function openForm({ title, fields, values = {}, submitLabel = "Enregistrer", onSubmit, onInput }){
   const dlg = $("#formDlg");
-  const body = fields.map(f => {
-    const v = values[f.name] ?? f.default ?? "";
-    const input = f.type === "file"
-      ? `<input name="${f.name}" type="file" accept="image/*"><div class="upl" data-upl></div>`
-      : f.type === "select"
-      ? `<select name="${f.name}">${f.options.map(o => `<option value="${esc(o.value)}" ${String(o.value) === String(v) ? "selected" : ""}>${esc(o.label)}</option>`).join("")}</select>`
-      : `<input name="${f.name}" type="${f.type || "text"}" value="${esc(v)}" ${f.required ? "required" : ""} ${f.step ? `step="${f.step}"` : ""} ${f.auto ? `autocomplete="${f.auto}"` : ""} placeholder="${esc(f.placeholder || "")}">`;
-    return `<label class="field"><span>${esc(f.label)}</span>${input}${f.hint ? `<small>${esc(f.hint)}</small>` : ""}</label>`;
-  }).join("");
+  const body = fields.map(f => fieldHTML(f, values)).join("");
   dlg.innerHTML = `<form class="dlg"><h2>${esc(title)}</h2>${body}<div class="err" data-err></div>
     <div class="dlg-actions"><button type="button" class="btn" data-close>Annuler</button><button type="submit" class="btn primary">${esc(submitLabel)}</button></div></form>`;
   const form = dlg.querySelector("form");
@@ -561,6 +609,27 @@ async function uploadThumb(file, form){
   btn.disabled = false;
 }
 
+/* Image par défaut d'un type de lien : redimensionnée en 480 × 300, envoyée dans le stockage, puis enregistrée */
+async function uploadDefault(type, file){
+  const st = document.querySelector(`[data-upl-def="${type}"]`);
+  if (st) st.textContent = "Envoi…";
+  try {
+    const blob = await resizeImage(file);
+    const path = `defaut-${type}-${crypto.randomUUID()}.jpg`;
+    const { error } = await sb.storage.from("miniatures").upload(path, blob, { contentType: "image/jpeg" });
+    if (error) throw error;
+    const { data } = sb.storage.from("miniatures").getPublicUrl(path);
+    await q(sb.from("miniatures_defaut").upsert({ type, url: data.publicUrl }));
+    await refresh();
+  } catch (ex){
+    if (st) st.textContent = "⚠️ " + (ex.message || ex) + " (as-tu lancé migration8.sql ?)";
+  }
+}
+document.addEventListener("change", e => {
+  const t = e.target;
+  if (t.dataset?.deftype && t.files?.[0]) uploadDefault(t.dataset.deftype, t.files[0]);
+});
+
 /* Liste de toutes les compétences, dans l'ordre de l'index, avec leur chemin « Matière › Sous-matière › Compétence » */
 function compEntries(){
   const out = [], lab = c => (c.prefixe ? c.prefixe + " " : "") + c.titre;
@@ -572,18 +641,90 @@ function compEntries(){
   return out;
 }
 
+/* Formulaire « destination » en cascade : Matière › Sous-matière › Compétence (› Bloc).
+   Remplace les très longues listes déroulantes. `fields` = champs ordinaires placés avant la destination. */
+function openDestForm({ title, submitLabel = "Copier", fields = [], values = {}, withBloc = false, start = null, startBloc = null, hint = "", onSubmit }){
+  if (!state.comps.length){ toast("Crée d'abord une compétence."); return; }
+  const dlg = $("#formDlg");
+  dlg.innerHTML = `<form class="dlg"><h2>${esc(title)}</h2>${fields.map(f => fieldHTML(f, values)).join("")}
+    <fieldset class="dest"><legend>Destination</legend>
+      <label class="field"><span>Matière</span><select name="m"></select></label>
+      <label class="field"><span>Sous-matière</span><select name="s"></select></label>
+      <label class="field"><span>Compétence</span><select name="c"></select></label>
+      ${withBloc ? `<label class="field"><span>Bloc</span><select name="b"></select></label>` : ""}
+    </fieldset>
+    ${hint ? `<p class="hint">${esc(hint)}</p>` : ""}
+    <div class="err" data-err></div>
+    <div class="dlg-actions"><button type="button" class="btn" data-close>Annuler</button><button type="submit" class="btn primary">${esc(submitLabel)}</button></div></form>`;
+  const f = dlg.querySelector("form"), el = f.elements;
+  const lab = c => (c.prefixe ? c.prefixe + " " : "") + c.titre;
+  const fill = (sel, opts, val) => {
+    sel.innerHTML = opts.map(o => `<option value="${esc(o.value)}">${esc(o.label)}</option>`).join("");
+    if (val != null && opts.some(o => o.value === val)) sel.value = val;
+  };
+  const fillS = sv => {
+    const mid = el.m.value, opts = [];
+    if (state.comps.some(c => c.matiere_id === mid) || !state.sous.some(s => s.matiere_id === mid))
+      opts.push({ value: "", label: "— directement dans la matière —" });
+    state.sous.filter(s => s.matiere_id === mid).forEach(s => opts.push({ value: s.id, label: s.nom }));
+    fill(el.s, opts, sv);
+  };
+  const fillC = cv => {
+    const mid = el.m.value, sid = el.s.value;
+    const list = sid ? state.comps.filter(c => c.sous_matiere_id === sid) : state.comps.filter(c => c.matiere_id === mid);
+    fill(el.c, list.length ? list.map(c => ({ value: c.id, label: lab(c) })) : [{ value: "", label: "— aucune compétence —" }], cv);
+  };
+  const fillB = bv => {
+    if (!withBloc) return;
+    const cid = el.c.value, opts = [];
+    if (cid){
+      state.blocs.filter(x => x.competence_id === cid).forEach((x, i) => {
+        const first = state.liens.find(l => l.bloc_id === x.id);
+        opts.push({ value: "b:" + x.id, label: x.titre || `Bloc ${i + 1}${first ? " – " + first.titre : ""}` });
+      });
+      opts.push({ value: "new", label: "+ nouveau bloc" });
+    } else opts.push({ value: "", label: "—" });
+    fill(el.b, opts, bv);
+  };
+  const comp0 = start && state.comps.find(x => x.id === start);
+  const s0 = comp0?.sous_matiere_id || "";
+  const m0 = comp0 && (comp0.matiere_id || state.sous.find(x => x.id === s0)?.matiere_id);
+  fill(el.m, state.matieres.map(m => ({ value: m.id, label: m.nom })), m0);
+  fillS(s0); fillC(comp0?.id); fillB(startBloc);
+  el.m.addEventListener("change", () => { fillS(); fillC(); fillB(); });
+  el.s.addEventListener("change", () => { fillC(); fillB(); });
+  el.c.addEventListener("change", () => fillB());
+  f.querySelector("[data-close]").onclick = () => dlg.close();
+  f.addEventListener("submit", async e => {
+    e.preventDefault();
+    const btn = f.querySelector("[type=submit]"), err = f.querySelector("[data-err]");
+    btn.disabled = true; err.textContent = "";
+    try {
+      const d = Object.fromEntries(new FormData(f));
+      if (!d.c) throw new Error("Choisis une compétence de destination.");
+      await onSubmit({ ...d, competence_id: d.c, bloc: withBloc ? d.b : null });
+      dlg.close();
+    } catch (ex){ err.textContent = ex.message || String(ex); btn.disabled = false; }
+  });
+  dlg.showModal();
+}
+
+// renvoie l'id du bloc visé : un bloc existant (« b:<id> ») ou un nouveau bloc créé dans la compétence
+async function targetBloc(cid, bloc){
+  if (bloc && bloc.startsWith("b:")) return bloc.slice(2);
+  const nb = await q(sb.from("blocs").insert({ competence_id: cid, titre: null, ordre: nextOrdre(state.blocs.filter(x => x.competence_id === cid)) }).select().single());
+  return nb.id;
+}
+
 /* Copie un bloc (et tous ses liens) dans une autre compétence */
 function formCopyBloc(id){
   const b = state.blocs.find(x => x.id === id);
   if (!b) return;
-  const options = compEntries().map(({ c, base }) => ({ value: c.id, label: base }));
-  if (!options.length){ toast("Aucune compétence disponible."); return; }
-  openForm({
+  openDestForm({
     title: "Copier le bloc" + (b.titre ? ` « ${b.titre} »` : ""),
-    submitLabel: "Copier",
-    fields: [{ name:"cible", label:"Copier dans la compétence :", type:"select", options, default: b.competence_id, hint:"Le bloc et tous ses liens sont dupliqués. L'original reste en place." }],
-    async onSubmit(d){
-      const cid = d.cible;
+    start: b.competence_id,
+    hint: "Le bloc et tous ses liens sont dupliqués. L'original reste en place.",
+    async onSubmit({ competence_id: cid }){
       const nb = await q(sb.from("blocs").insert({ competence_id: cid, titre: b.titre, ordre: nextOrdre(state.blocs.filter(x => x.competence_id === cid)) }).select().single());
       const rows = state.liens.filter(l => l.bloc_id === id).map(l => ({ bloc_id: nb.id, titre: l.titre, url: l.url, type: l.type, miniature_url: l.miniature_url, prive: !!l.prive, ordre: l.ordre }));
       if (rows.length) await q(sb.from("liens").insert(rows));
@@ -597,24 +738,14 @@ function formCopyBloc(id){
 function formCopyLien(id){
   const l = state.liens.find(x => x.id === id);
   if (!l) return;
-  const options = [];
-  compEntries().forEach(({ c, base }) => {
-    state.blocs.filter(b => b.competence_id === c.id).forEach((b, i) =>
-      options.push({ value: "b:" + b.id, label: `${base} › ${b.titre || "bloc " + (i + 1)}` }));
-    options.push({ value: "c:" + c.id, label: `${base} › + nouveau bloc` });
-  });
-  if (!options.length){ toast("Aucune compétence disponible."); return; }
-  openForm({
+  openDestForm({
     title: `Copier le lien « ${l.titre} »`,
-    submitLabel: "Copier",
-    fields: [{ name:"cible", label:"Copier dans :", type:"select", options, default: "b:" + l.bloc_id, hint:"Le lien est dupliqué. L'original reste en place." }],
-    async onSubmit(d){
-      let bid;
-      if (d.cible.startsWith("c:")){
-        const cid = d.cible.slice(2);
-        const nb = await q(sb.from("blocs").insert({ competence_id: cid, titre: null, ordre: nextOrdre(state.blocs.filter(x => x.competence_id === cid)) }).select().single());
-        bid = nb.id;
-      } else bid = d.cible.slice(2);
+    withBloc: true,
+    start: state.blocs.find(x => x.id === l.bloc_id)?.competence_id,
+    startBloc: "b:" + l.bloc_id,
+    hint: "Le lien est dupliqué. L'original reste en place.",
+    async onSubmit({ competence_id: cid, bloc }){
+      const bid = await targetBloc(cid, bloc);
       await q(sb.from("liens").insert({ bloc_id: bid, titre: l.titre, url: l.url, type: l.type, miniature_url: l.miniature_url, prive: !!l.prive, ordre: nextOrdre(state.liens.filter(x => x.bloc_id === bid)) }));
       await refresh();
       toast("Lien copié ✅");
@@ -631,11 +762,8 @@ function formLien(id, blocId){
     fields: [
       { name:"url", label:"Adresse du lien", required:true, placeholder:"https://…", auto:"off" },
       { name:"titre", label:"Titre affiché", required:true, placeholder:"Ex. Jeu des tables de multiplication" },
-      { name:"type", label:"Type de lien", type:"select", default:"appli", options:[
-        { value:"appli", label:"🎮 Appli / jeu en ligne" },
-        { value:"presentation", label:"📊 Présentation (PowerPoint, diaporama…)" },
-        { value:"autre", label:"🔗 Autre lien" } ] },
-      { name:"fichier", label:"Miniature : choisir une image", type:"file", hint:"Elle est redimensionnée automatiquement (480 × 300 px) puis envoyée dans Supabase. Laisse vide : l'aperçu du site est généré quand c'est possible." },
+      { name:"type", label:"Type de lien", type:"select", default:"appli", options: TYPE_OPTIONS },
+      { name:"fichier", label:"Miniature : choisir une image", type:"file", hint:"Elle est redimensionnée automatiquement (480 × 300 px) puis envoyée dans Supabase. Laisse vide : l'image par défaut de ce type (réglée dans ⚙️ Paramètres) est utilisée, sinon une simple icône." },
       { name:"miniature_url", label:"…ou adresse d'une image (facultatif)", placeholder:"https://…/image.png" }
     ],
     values: l || {},
@@ -682,10 +810,7 @@ function formPropose(){
     fields: [
       { name:"url", label:"Adresse du lien", required:true, placeholder:"https://…", auto:"off" },
       { name:"titre", label:"Titre", required:true, placeholder:"Ex. Jeu des tables de multiplication" },
-      { name:"type", label:"Type de lien", type:"select", default:"appli", options:[
-        { value:"appli", label:"🎮 Appli / jeu en ligne" },
-        { value:"presentation", label:"📊 Présentation (PowerPoint, diaporama…)" },
-        { value:"autre", label:"🔗 Autre lien" } ] },
+      { name:"type", label:"Type de lien", type:"select", default:"appli", options: TYPE_OPTIONS },
       { name:"competence_id", label:"Pour quelle compétence ? (facultatif)", type:"select", options, default:"" },
       { name:"commentaire", label:"Un petit mot (facultatif)", placeholder:"Ex. Je l'utilise en ateliers" },
       { name:"nom", label:"Ton prénom (facultatif)" }
@@ -734,33 +859,19 @@ function renderInbox(){
 function formAcceptProp(id){
   const p = state.props.find(x => x.id === id);
   if (!p) return;
-  const options = [];
-  compEntries().forEach(({ c, base }) => {
-    state.blocs.filter(b => b.competence_id === c.id).forEach((b, i) =>
-      options.push({ value: "b:" + b.id, label: `${base} › ${b.titre || "bloc " + (i + 1)}` }));
-    options.push({ value: "c:" + c.id, label: `${base} › + nouveau bloc` });
-  });
-  if (!options.length){ toast("Crée d'abord une compétence."); return; }
-  const first = p.competence_id && options.find(o => o.value.endsWith(p.competence_id) || state.blocs.some(b => b.competence_id === p.competence_id && o.value === "b:" + b.id));
-  openForm({
+  openDestForm({
     title: "Ajouter cette proposition",
     submitLabel: "Ajouter",
+    withBloc: true,
+    start: p.competence_id,
     fields: [
-      { name:"titre", label:"Titre", required:true, default: p.titre },
-      { name:"url", label:"Adresse du lien", required:true, default: p.url },
-      { name:"type", label:"Type de lien", type:"select", default: p.type, options:[
-        { value:"appli", label:"🎮 Appli / jeu en ligne" },
-        { value:"presentation", label:"📊 Présentation (PowerPoint, diaporama…)" },
-        { value:"autre", label:"🔗 Autre lien" } ] },
-      { name:"cible", label:"Ajouter dans :", type:"select", options, default: (first || options[0]).value }
+      { name:"titre", label:"Titre", required:true },
+      { name:"url", label:"Adresse du lien", required:true },
+      { name:"type", label:"Type de lien", type:"select", options: TYPE_OPTIONS }
     ],
+    values: { titre: p.titre, url: p.url, type: p.type },
     async onSubmit(d){
-      let bid;
-      if (d.cible.startsWith("c:")){
-        const cid = d.cible.slice(2);
-        const nb = await q(sb.from("blocs").insert({ competence_id: cid, titre: null, ordre: nextOrdre(state.blocs.filter(x => x.competence_id === cid)) }).select().single());
-        bid = nb.id;
-      } else bid = d.cible.slice(2);
+      const bid = await targetBloc(d.competence_id, d.bloc);
       await q(sb.from("liens").insert({ bloc_id: bid, titre: d.titre.trim(), url: normUrl(d.url), type: d.type, ordre: nextOrdre(state.liens.filter(x => x.bloc_id === bid)) }));
       await q(sb.from("propositions").delete().eq("id", id));
       await refresh();
@@ -875,6 +986,10 @@ const handlers = {
     toast(m.masque ? "Matière visible par les visiteurs" : "Matière masquée aux visiteurs 🙈");
   },
   top(){ window.scrollTo({ top: 0, behavior: "smooth" }); },
+  async "del-default"(type){
+    await q(sb.from("miniatures_defaut").delete().eq("type", type));
+    await refresh();
+  },
   "add-menu"(id){ chooseAdd(id); },
   propose(){ formPropose(); },
   inbox(){ renderInbox(); $("#inbDlg").showModal(); },
